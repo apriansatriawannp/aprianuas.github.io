@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <title>Fantasy Builder Game</title>
+    <meta charset="UTF-8">
+    <title>Fantasy World Builder</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>🌿 Fantasy Castle Builder</h1>
-
-<div class="toolbar">
-    <button onclick="setItem('castle')">🏰 Castle</button>
-    <button onclick="setItem('wall')">🧱 Wall</button>
-    <button onclick="setItem('tree')">🌳 Tree</button>
-    <button onclick="setItem('tower')">🗼 Tower</button>
+<div id="toolbar">
+    <b>🧱 Material:</b><br>
+    <button onclick="selectTile('grass')">🌿 Grass</button>
+    <button onclick="selectTile('stone')">🪨 Stone</button>
+    <button onclick="selectTile('wood')">🪵 Wood</button>
+    <button onclick="selectTile('tree')">🌳 Tree</button>
+    <button onclick="selectTile('castle')">🏰 Castle</button>
+    <p>🖱️ Drag: geser kamera<br>Left click: bangun | Right click: hapus</p>
 </div>
 
-<div id="map"></div>
+<canvas id="game"></canvas>
 
 <script src="script.js"></script>
 </body>

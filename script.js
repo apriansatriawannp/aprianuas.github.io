@@ -1,25 +1,35 @@
-const map = document.getElementById("map");
-let selectedItem = "castle";
-
-const items = {
-    castle: "🏰",
-    wall: "🧱",
-    tree: "🌳",
-    tower: "🗼"
-};
-
-function setItem(item) {
-    selectedItem = item;
+body {
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(#5da9ff, #b7f5c6);
+    font-family: Arial, sans-serif;
 }
 
-// Buat grid
-for (let i = 0; i < 260; i++) {
-    const cell = document.createElement("div");
-    cell.classList.add("cell");
+#toolbar {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 10px;
+    border-radius: 12px;
+    z-index: 10;
+    font-size: 14px;
+}
 
-    cell.addEventListener("click", () => {
-        cell.textContent = items[selectedItem];
-    });
+button {
+    margin: 3px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #4caf50;
+    color: white;
+}
 
-    map.appendChild(cell);
+button:hover {
+    background: #43a047;
+}
+
+canvas {
+    display: block;
 }

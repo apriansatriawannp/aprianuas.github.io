@@ -1,125 +1,120 @@
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+let scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x88ccee, 10, 80);
 
-canvas.width = innerWidth;
-canvas.height = innerHeight;
+let camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer();
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
 
-const tileSize = 50;
-let cam = { x: 0, y: 0 };
-let dragging = false;
-let last = { x: 0, y: 0 };
+// Light
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(10, 20, 10);
+scene.add(light);
+scene.add(new THREE.AmbientLight(0x88aa88));
 
-let selected = "grass";
+// Ground
+const groundGeo = new THREE.PlaneGeometry(200, 200);
+const groundMat = new THREE.MeshLambertMaterial({ color: 0x3b7d3b });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
 
-function selectTile(type) {
-    selected = type;
+// Trees
+function createTree(x, z) {
+    const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.3, 0.3, 2),
+        new THREE.MeshLambertMaterial({ color: 0x8b5a2b })
+    );
+    trunk.position.set(x, 1, z);
+
+    const leaves = new THREE.Mesh(
+        new THREE.SphereGeometry(1.2),
+        new THREE.MeshLambertMaterial({ color: 0x2e8b57 })
+    );
+    leaves.position.set(x, 3, z);
+
+    scene.add(trunk);
+    scene.add(leaves);
 }
 
-const world = {};
-const key = (x, y) => `${x},${y}`;
+// Generate forest
+for (let i = 0; i < 60; i++) {
+    createTree(
+        (Math.random() - 0.5) * 100,
+        (Math.random() - 0.5) * 100
+    );
+}
 
-// Mouse controls
-canvas.onmousedown = e => {
-    if (e.button === 1 || e.button === 2) {
-        dragging = true;
-        last.x = e.clientX;
-        last.y = e.clientY;
+// Player
+camera.position.set(0, 2, 5);
+
+// Controls
+let keys = {};
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+// Mouse look
+let yaw = 0, pitch = 0;
+document.body.addEventListener("mousemove", e => {
+    if (document.pointerLockElement === document.body) {
+        yaw -= e.movementX * 0.002;
+        pitch -= e.movementY * 0.002;
+        pitch = Math.max(-1.5, Math.min(1.5, pitch));
     }
-};
-
-canvas.onmouseup = () => dragging = false;
-
-canvas.onmousemove = e => {
-    if (dragging) {
-        cam.x += e.clientX - last.x;
-        cam.y += e.clientY - last.y;
-        last.x = e.clientX;
-        last.y = e.clientY;
-    }
-};
-
-canvas.oncontextmenu = e => e.preventDefault();
-
-// Build
-canvas.onclick = e => {
-    const x = Math.floor((e.clientX - cam.x) / tileSize);
-    const y = Math.floor((e.clientY - cam.y) / tileSize);
-    world[key(x, y)] = selected;
-};
-
-// Delete
-canvas.addEventListener("contextmenu", e => {
-    const x = Math.floor((e.clientX - cam.x) / tileSize);
-    const y = Math.floor((e.clientY - cam.y) / tileSize);
-    delete world[key(x, y)];
 });
 
-function drawTile(type, x, y) {
-    const px = x * tileSize + cam.x;
-    const py = y * tileSize + cam.y;
+document.body.onclick = () => document.body.requestPointerLock();
 
-    if (type === "grass") {
-        ctx.fillStyle = "#5fbf4a";
-        ctx.fillRect(px, py, tileSize, tileSize);
+// Blocks
+const blocks = [];
+const blockGeo = new THREE.BoxGeometry(1,1,1);
+const blockMat = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+
+// Build block on click
+window.addEventListener("mousedown", () => {
+    const dir = new THREE.Vector3(
+        Math.sin(yaw),
+        0,
+        Math.cos(yaw)
+    );
+
+    const pos = camera.position.clone().add(dir.multiplyScalar(3));
+    const block = new THREE.Mesh(blockGeo, blockMat);
+    block.position.set(
+        Math.round(pos.x),
+        0.5,
+        Math.round(pos.z)
+    );
+
+    scene.add(block);
+    blocks.push(block);
+});
+
+// Loop
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Move
+    let speed = 0.1;
+    if (keys["w"]) {
+        camera.position.x -= Math.sin(yaw) * speed;
+        camera.position.z -= Math.cos(yaw) * speed;
+    }
+    if (keys["s"]) {
+        camera.position.x += Math.sin(yaw) * speed;
+        camera.position.z += Math.cos(yaw) * speed;
+    }
+    if (keys["a"]) {
+        camera.position.x -= Math.cos(yaw) * speed;
+        camera.position.z += Math.sin(yaw) * speed;
+    }
+    if (keys["d"]) {
+        camera.position.x += Math.cos(yaw) * speed;
+        camera.position.z -= Math.sin(yaw) * speed;
     }
 
-    if (type === "stone") {
-        ctx.fillStyle = "#888";
-        ctx.fillRect(px, py, tileSize, tileSize);
-    }
-
-    if (type === "wood") {
-        ctx.fillStyle = "#a36a3a";
-        ctx.fillRect(px, py, tileSize, tileSize);
-    }
-
-    if (type === "tree") {
-        ctx.fillStyle = "#5fbf4a";
-        ctx.fillRect(px, py, tileSize, tileSize);
-        ctx.fillStyle = "#2e7d32";
-        ctx.beginPath();
-        ctx.arc(px + 25, py + 25, 15, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    if (type === "castle") {
-        ctx.fillStyle = "#aaa";
-        ctx.fillRect(px + 10, py + 10, 30, 30);
-        ctx.fillStyle = "#555";
-        ctx.fillRect(px + 18, py + 18, 14, 14);
-    }
+    camera.rotation.set(pitch, yaw, 0);
+    renderer.render(scene, camera);
 }
 
-function drawBackground() {
-    ctx.fillStyle = "rgba(255,255,255,0.4)";
-    for (let i = 0; i < 5; i++) {
-        ctx.beginPath();
-        ctx.arc((Date.now() / 50 + i * 200) % innerWidth, 80 + i * 30, 40, 0, Math.PI * 2);
-        ctx.fill();
-    }
-}
-
-function drawGrid() {
-    ctx.strokeStyle = "rgba(0,0,0,0.05)";
-    for (let y = -50; y < 100; y++) {
-        for (let x = -50; x < 100; x++) {
-            ctx.strokeRect(x * tileSize + cam.x, y * tileSize + cam.y, tileSize, tileSize);
-        }
-    }
-}
-
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    drawBackground();
-    drawGrid();
-
-    for (let k in world) {
-        const [x, y] = k.split(",").map(Number);
-        drawTile(world[k], x, y);
-    }
-
-    requestAnimationFrame(draw);
-}
-
-draw();
+animate();

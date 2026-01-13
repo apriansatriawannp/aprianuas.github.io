@@ -1,24 +1,20 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Fantasy World Builder</title>
+    <title>Fantasy 3D Builder</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="toolbar">
-    <b>🧱 Material:</b><br>
-    <button onclick="selectTile('grass')">🌿 Grass</button>
-    <button onclick="selectTile('stone')">🪨 Stone</button>
-    <button onclick="selectTile('wood')">🪵 Wood</button>
-    <button onclick="selectTile('tree')">🌳 Tree</button>
-    <button onclick="selectTile('castle')">🏰 Castle</button>
-    <p>🖱️ Drag: geser kamera<br>Left click: bangun | Right click: hapus</p>
+<div id="ui">
+    <p>🎮 WASD: Move | Mouse: Look | Click: Build block</p>
 </div>
 
-<canvas id="game"></canvas>
+<audio autoplay loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/10/25/audio_fantasy.mp3" type="audio/mpeg">
+</audio>
 
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

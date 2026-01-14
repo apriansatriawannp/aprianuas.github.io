@@ -1,22 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Fantasy Builder 3D</title>
+  <title>Fantasy Voxel Builder</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div id="hotbar">
-  <div class="slot active">🗡</div>
-  <div class="slot">⛏</div>
-  <div class="slot">🧱</div>
-  <div class="slot">🌲</div>
-  <div class="slot">🔥</div>
+<div id="ui">
+  WASD Move | Space Jump | Shift Run | Scroll Zoom<br>
+  Click Build | Right Click Destroy | 1-5 Select Item
 </div>
 
-<audio id="bgm" src="assets/music.mp3" loop></audio>
+<!-- HOTBAR -->
+<div id="hotbar">
+  <div class="slot active">🧱</div>
+  <div class="slot">🌳</div>
+  <div class="slot">⛏️</div>
+  <div class="slot">🗡️</div>
+  <div class="slot">🪓</div>
+</div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="main.js"></script>
+<audio autoplay loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_fantasy_forest.mp3" type="audio/mpeg">
+</audio>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.152/build/three.min.js"></script>
+<script src="script.js"></script>
 </body>
 </html>

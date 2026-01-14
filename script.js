@@ -1,36 +1,37 @@
 let scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x88ccee, 0.02);
+scene.fog = new THREE.Fog(0x9fd4ff, 10, 120);
 
-let camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
+let camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 500);
 let renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(devicePixelRatio);
-renderer.setClearColor(0x87ceeb);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.setClearColor(0x9fd4ff);
 document.body.appendChild(renderer.domElement);
 
-// LIGHT
-scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-let sun = new THREE.DirectionalLight(0xfff5cc, 1);
-sun.position.set(50, 100, 50);
+// ===== LIGHTING CINEMATIC =====
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+let sun = new THREE.DirectionalLight(0xfff3d6, 1.2);
+sun.position.set(100, 200, 100);
 scene.add(sun);
 
-// MATERIALS
+// ===== MATERIALS =====
 const geo = new THREE.BoxGeometry(1, 1, 1);
 const mats = {
-  grass: new THREE.MeshLambertMaterial({ color: 0x55aa55 }),
-  stone: new THREE.MeshLambertMaterial({ color: 0x999999 }),
-  wood: new THREE.MeshLambertMaterial({ color: 0x8b5a2b })
+  grass: new THREE.MeshStandardMaterial({ color: 0x4caf50 }),
+  stone: new THREE.MeshStandardMaterial({ color: 0x888888 }),
+  wood: new THREE.MeshStandardMaterial({ color: 0x8b5a2b })
 };
 
-// WORLD
+// ===== TERRAIN PROCEDURAL =====
 const blocks = [];
-const worldSize = 40;
+const size = 60;
 
-// Terrain dengan bukit
-for (let x = -worldSize; x < worldSize; x++) {
-  for (let z = -worldSize; z < worldSize; z++) {
-    let height = Math.floor(Math.sin(x * 0.2) + Math.cos(z * 0.2));
-    for (let y = 0; y <= height; y++) {
+for (let x = -size; x < size; x++) {
+  for (let z = -size; z < size; z++) {
+    let h = Math.floor(Math.sin(x * 0.1) * 2 + Math.cos(z * 0.1) * 2);
+    for (let y = 0; y <= h; y++) {
       let b = new THREE.Mesh(geo, mats.grass);
       b.position.set(x, y, z);
       scene.add(b);
@@ -39,108 +40,83 @@ for (let x = -worldSize; x < worldSize; x++) {
   }
 }
 
-// POHON
-function makeTree(x, z, y) {
+// ===== TREES =====
+function tree(x, z, y) {
   let trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.2, 0.2, 2),
+    new THREE.CylinderGeometry(0.2, 0.3, 2),
     mats.wood
   );
   trunk.position.set(x, y + 1, z);
 
-  let leaves = new THREE.Mesh(
-    new THREE.SphereGeometry(1),
-    new THREE.MeshLambertMaterial({ color: 0x2e8b57 })
+  let crown = new THREE.Mesh(
+    new THREE.SphereGeometry(1.2),
+    new THREE.MeshStandardMaterial({ color: 0x2e7d32 })
   );
-  leaves.position.set(x, y + 2.5, z);
+  crown.position.set(x, y + 2.8, z);
 
-  scene.add(trunk, leaves);
+  scene.add(trunk, crown);
 }
 
-// Generate trees random
-for (let i = 0; i < 50; i++) {
-  let x = (Math.random() - 0.5) * 60;
-  let z = (Math.random() - 0.5) * 60;
-  makeTree(x, z, 1);
+for (let i = 0; i < 80; i++) {
+  tree((Math.random() - 0.5) * 100, (Math.random() - 0.5) * 100, 2);
 }
 
-// ANIMALS
+// ===== ANIMALS WITH BETTER AI =====
 const animals = [];
 
-function makeAnimal(color, x, z) {
+function spawnAnimal(color, x, z) {
   let mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(0.6, 0.4, 1),
-    new THREE.MeshLambertMaterial({ color })
+    new THREE.BoxGeometry(0.8, 0.5, 1.2),
+    new THREE.MeshStandardMaterial({ color })
   );
-  mesh.position.set(x, 1, z);
+  mesh.position.set(x, 3, z);
   scene.add(mesh);
-  animals.push({ mesh, dir: Math.random() * Math.PI * 2 });
+  animals.push({
+    mesh,
+    dir: Math.random() * Math.PI * 2,
+    timer: Math.random() * 100
+  });
 }
 
-// Spawn animals
-for (let i = 0; i < 8; i++) makeAnimal(0xffffff, Math.random() * 40 - 20, Math.random() * 40 - 20); // rabbit
-for (let i = 0; i < 5; i++) makeAnimal(0x8b5a2b, Math.random() * 40 - 20, Math.random() * 40 - 20); // deer
+for (let i = 0; i < 10; i++) spawnAnimal(0xffffff, Math.random() * 60 - 30, Math.random() * 60 - 30);
+for (let i = 0; i < 6; i++) spawnAnimal(0x8b5a2b, Math.random() * 60 - 30, Math.random() * 60 - 30);
 
-// PLAYER
-camera.position.set(0, 5, 10);
-let yaw = 0, pitch = 0;
-let velY = 0, canJump = false;
+// ===== PLAYER =====
+camera.position.set(0, 6, 10);
+let yaw = 0, pitch = 0, velY = 0, canJump = false;
+let keys = {};
 
 document.body.onclick = () => document.body.requestPointerLock();
 
-document.addEventListener("mousemove", e => {
+document.onmousemove = e => {
   if (document.pointerLockElement) {
     yaw -= e.movementX * 0.002;
     pitch -= e.movementY * 0.002;
-    pitch = Math.max(-1.4, Math.min(1.4, pitch));
+    pitch = Math.max(-1.5, Math.min(1.5, pitch));
   }
-});
+};
 
-// INPUT
-let keys = {};
 onkeydown = e => keys[e.key.toLowerCase()] = true;
 onkeyup = e => keys[e.key.toLowerCase()] = false;
 
-// HOTBAR
-let selectedSlot = 0;
-const slots = document.querySelectorAll(".slot");
-
-function updateHotbar() {
-  slots.forEach((s, i) => s.classList.toggle("active", i === selectedSlot));
-}
-updateHotbar();
-
-onkeydown = e => {
-  if (e.key >= "1" && e.key <= "5") {
-    selectedSlot = parseInt(e.key) - 1;
-    updateHotbar();
-  }
-  keys[e.key.toLowerCase()] = true;
-};
-
-// BUILD SYSTEM
+// ===== BUILD SYSTEM =====
 let raycaster = new THREE.Raycaster();
 let mouse = new THREE.Vector2(0, 0);
 
 addEventListener("mousedown", e => {
   raycaster.setFromCamera(mouse, camera);
   let hits = raycaster.intersectObjects(blocks);
-
   if (!hits.length) return;
 
   let hit = hits[0];
   let pos = hit.object.position.clone().add(hit.face.normal);
 
   if (e.button === 0) {
-    let mat = mats.stone;
-    if (selectedSlot === 1) mat = mats.wood;
-    if (selectedSlot === 2) mat = mats.grass;
-
-    let b = new THREE.Mesh(geo, mat);
+    let b = new THREE.Mesh(geo, mats.stone);
     b.position.copy(pos);
     scene.add(b);
     blocks.push(b);
   }
-
   if (e.button === 2) {
     scene.remove(hit.object);
     blocks.splice(blocks.indexOf(hit.object), 1);
@@ -149,9 +125,11 @@ addEventListener("mousedown", e => {
 
 addEventListener("contextmenu", e => e.preventDefault());
 
-// MOVE
-function move() {
-  let speed = keys["shift"] ? 0.2 : 0.1;
+// ===== LOOP =====
+function animate() {
+  requestAnimationFrame(animate);
+
+  let speed = keys["shift"] ? 0.25 : 0.12;
 
   if (keys["w"]) {
     camera.position.x -= Math.sin(yaw) * speed;
@@ -161,43 +139,31 @@ function move() {
     camera.position.x += Math.sin(yaw) * speed;
     camera.position.z += Math.cos(yaw) * speed;
   }
-  if (keys["a"]) {
-    camera.position.x -= Math.cos(yaw) * speed;
-    camera.position.z += Math.sin(yaw) * speed;
-  }
-  if (keys["d"]) {
-    camera.position.x += Math.cos(yaw) * speed;
-    camera.position.z -= Math.sin(yaw) * speed;
-  }
 
   velY -= 0.01;
   camera.position.y += velY;
-  if (camera.position.y < 3) {
-    camera.position.y = 3;
+  if (camera.position.y < 5) {
+    camera.position.y = 5;
     velY = 0;
     canJump = true;
   }
-
   if (keys[" "] && canJump) {
     velY = 0.25;
     canJump = false;
   }
-}
 
-// LOOP
-function animate() {
-  requestAnimationFrame(animate);
-
-  move();
-  camera.rotation.set(pitch, yaw, 0);
-
-  // Animal movement
+  // Smarter animal motion
   animals.forEach(a => {
-    a.mesh.position.x += Math.sin(a.dir) * 0.01;
-    a.mesh.position.z += Math.cos(a.dir) * 0.01;
-    if (Math.random() < 0.01) a.dir = Math.random() * Math.PI * 2;
+    a.timer--;
+    if (a.timer <= 0) {
+      a.dir = Math.random() * Math.PI * 2;
+      a.timer = 50 + Math.random() * 100;
+    }
+    a.mesh.position.x += Math.sin(a.dir) * 0.015;
+    a.mesh.position.z += Math.cos(a.dir) * 0.015;
   });
 
+  camera.rotation.set(pitch, yaw, 0);
   renderer.render(scene, camera);
 }
 

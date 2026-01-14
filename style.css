@@ -5,17 +5,6 @@ body {
   font-family: sans-serif;
 }
 
-#crosshair {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 24px;
-  color: white;
-  pointer-events: none;
-  user-select: none;
-}
-
 #hotbar {
   position: fixed;
   bottom: 20px;
@@ -23,7 +12,7 @@ body {
   transform: translateX(-50%);
   display: flex;
   gap: 10px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.4);
   padding: 10px 20px;
   border-radius: 12px;
 }
